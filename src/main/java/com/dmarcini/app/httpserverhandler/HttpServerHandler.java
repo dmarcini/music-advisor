@@ -58,11 +58,21 @@ public class HttpServerHandler {
         return query;
     }
 
-    public HttpServerHandler makeHttpRequest(String uri, String requestBody) {
+    public HttpServerHandler makeHttpPostRequest(String uri, HttpRequestHeader httpRequestHeader, String requestBody) {
         httpRequest = HttpRequest.newBuilder()
-                .header("Content-Type", "application/x-www-form-urlencoded")
+                .header(httpRequestHeader.getName(), httpRequestHeader.getValue())
                 .uri(URI.create(uri))
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        return this;
+    }
+
+    public HttpServerHandler makeHttpGetRequest(String uri, HttpRequestHeader httpRequestHeader) {
+        httpRequest = HttpRequest.newBuilder()
+                .header(httpRequestHeader.getName(), httpRequestHeader.getValue())
+                .uri(URI.create(uri))
+                .GET()
                 .build();
 
         return this;

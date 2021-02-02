@@ -1,4 +1,4 @@
-package com.dmarcini.app.musicadvisor;
+package com.dmarcini.app.musicadvisor.userrequest;
 
 public enum Request {
     AUTH ("auth"),
