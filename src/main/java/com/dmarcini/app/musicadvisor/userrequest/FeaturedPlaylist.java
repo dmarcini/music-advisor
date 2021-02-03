@@ -2,14 +2,14 @@ package com.dmarcini.app.musicadvisor.userrequest;
 
 import com.google.gson.JsonElement;
 
-public class Playlist {
+public class FeaturedPlaylist {
     private final String name;
     private final String url;
 
-    public Playlist(JsonElement playlist) {
-        this.name = playlist.getAsJsonObject()
+    public FeaturedPlaylist(JsonElement featuredPlaylist) {
+        this.name = featuredPlaylist.getAsJsonObject()
                 .get("name").getAsString();
-        this.url = playlist.getAsJsonObject()
+        this.url = featuredPlaylist.getAsJsonObject()
                 .get("external_urls").getAsJsonObject()
                 .get("spotify").getAsString();
     }
