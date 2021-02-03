@@ -3,7 +3,8 @@ package com.dmarcini.app.musicadvisor;
 import com.dmarcini.app.httpserverhandler.HttpRequestHeader;
 import com.dmarcini.app.httpserverhandler.HttpServerHandler;
 
-import com.dmarcini.app.musicadvisor.userrequest.*;
+import com.dmarcini.app.musicadvisor.reponse.ResponseView;
+import com.dmarcini.app.musicadvisor.request.*;
 
 import com.google.gson.JsonParser;
 
@@ -20,42 +21,60 @@ public class MusicAdvisor {
 
     private final HttpServerHandler httpServerHandler;
 
-    private final UserRequestsManager userRequestsManager;
+    private final RequestsManager requestsManager;
+    private final ResponseView responseView;
 
     public MusicAdvisor() {
         this.scanner = new Scanner(System.in);
+
         this.httpServerHandler = new HttpServerHandler();
-        this.userRequestsManager = new UserRequestsManager();
+
+        this.requestsManager = new RequestsManager();
+        this.responseView = new ResponseView(5);
     }
 
     public void menu() {
-        UserRequest userRequest;
+        MusicAdvisorOption musicAdvisorOption;
         String[] userInput = new String[0];
 
         do {
-            userRequest = null;
+            musicAdvisorOption = null;
 
-            while (userRequest == null) {
+            while (musicAdvisorOption == null) {
                 userInput = scanner.nextLine().split(" ");
 
-                userRequest = UserRequest.fromString(userInput[0]);
+                musicAdvisorOption = MusicAdvisorOption.fromString(userInput[0]);
             }
 
-            switch (userRequest) {
+            switch (musicAdvisorOption) {
                 case AUTH -> auth();
-                case FEATURED_PLAYLISTS -> userRequestsManager.requestFeaturedPlaylists().printFeaturedPlaylists();
-                case NEW_ALBUMS -> userRequestsManager.requestNewAlbums().printNewAlbums();
-                case CATEGORIES -> userRequestsManager.requestCategories().printCategories();
+                case FEATURED_PLAYLISTS -> responseView.setEntries(
+                        MusicAdvisorOption.FEATURED_PLAYLISTS,
+                        requestsManager.requestFeaturedPlaylists().getFeaturedPlaylists()
+                );
+                case NEW_ALBUMS -> responseView.setEntries(
+                        MusicAdvisorOption.NEW_ALBUMS,
+                        requestsManager.requestNewAlbums().getNewAlbums()
+                );
+                case CATEGORIES -> responseView.setEntries(
+                        MusicAdvisorOption.CATEGORIES,
+                        requestsManager.requestCategories().getCategories()
+                );
                 case PLAYLISTS -> {
                     if (userInput.length < 2) {
                         System.out.println("Please specify a category of playlists.");
                         break;
                     }
 
-                    userRequestsManager.requestPlaylists(userInput[1]).printPlaylists();
+                    responseView.setEntries(
+                            MusicAdvisorOption.PLAYLISTS,
+                            requestsManager.requestPlaylists(userInput[1]).getPlaylists()
+                    );
                 }
+                case NEXT_PAGE -> responseView.nextPage();
+                case PREV_PAGE -> responseView.prevPage();
             }
-        } while (userRequest != UserRequest.EXIT);
+        } while (musicAdvisorOption != MusicAdvisorOption.EXIT);
     }
 
     private void auth() {
@@ -90,7 +109,7 @@ public class MusicAdvisor {
 
         String accessToken = JsonParser.parseString(response).getAsJsonObject().get("access_token").getAsString();
 
-        userRequestsManager.setAccessToken(accessToken);
+        requestsManager.setAccessToken(accessToken);
 
         System.out.println("Success!");
     }

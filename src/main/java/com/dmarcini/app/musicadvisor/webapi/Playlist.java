@@ -1,8 +1,8 @@
-package com.dmarcini.app.musicadvisor.userrequest;
+package com.dmarcini.app.musicadvisor.webapi;
 
 import com.google.gson.JsonElement;
 
-public class Playlist {
+public class Playlist implements Printable {
     private final String name;
     private final String url;
 
@@ -14,11 +14,9 @@ public class Playlist {
                 .get("spotify").getAsString();
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getUrl() {
-        return url;
+    public void print() {
+        System.out.println(name);
+        System.out.println(url);
+        System.out.println();
     }
 }

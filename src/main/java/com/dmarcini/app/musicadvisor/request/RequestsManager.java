@@ -1,15 +1,19 @@
-package com.dmarcini.app.musicadvisor.userrequest;
+package com.dmarcini.app.musicadvisor.request;
 
 import com.dmarcini.app.httpserverhandler.HttpRequestHeader;
 import com.dmarcini.app.httpserverhandler.HttpServerHandler;
 
+import com.dmarcini.app.musicadvisor.webapi.Category;
+import com.dmarcini.app.musicadvisor.webapi.FeaturedPlaylist;
+import com.dmarcini.app.musicadvisor.webapi.NewAlbum;
+import com.dmarcini.app.musicadvisor.webapi.Playlist;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class UserRequestsManager {
+public class RequestsManager {
     private final static String CATEGORIES_URI = "https://api.spotify.com/v1/browse/categories";
     private final static String NEW_ALBUMS_URI = "https://api.spotify.com/v1/browse/new-releases";
     private final static String FEATURED_PLAYLISTS_URI = "https://api.spotify.com/v1/browse/featured-playlists";
@@ -23,7 +27,7 @@ public class UserRequestsManager {
     private final List<Category> categories;
     private final List<Playlist> playlists;
 
-    public UserRequestsManager() {
+    public RequestsManager() {
         this.httpServerHandler = new HttpServerHandler();
 
         this.featuredPlaylists = new ArrayList<>();
@@ -36,40 +40,23 @@ public class UserRequestsManager {
         this.httpRequestHeader = new HttpRequestHeader("Authorization", "Bearer " + accessToken);
     }
 
-    public void printFeaturedPlaylists() {
-        for (var featuredPlaylist : featuredPlaylists) {
-            System.out.println(featuredPlaylist.getName());
-            System.out.println(featuredPlaylist.getUrl());
-            System.out.println();
-        }
+    public List<FeaturedPlaylist> getFeaturedPlaylists() {
+        return featuredPlaylists;
     }
 
-    public void printNewAlbums() {
-        for (var newAlbum : newAlbums) {
-            System.out.println(newAlbum.getName());
-            System.out.println("[" + newAlbum.getAuthor() + "]");
-            System.out.println(newAlbum.getUrl());
-            System.out.println();
-        }
+    public List<NewAlbum> getNewAlbums() {
+        return newAlbums;
     }
 
-    public void printCategories() {
-        for (var category : categories) {
-            System.out.println(category.getName());
-        }
-
-        System.out.println();
+    public List<Category> getCategories() {
+        return categories;
     }
 
-    public void printPlaylists() {
-        for (var playlist : playlists) {
-            System.out.println(playlist.getName());
-            System.out.println(playlist.getUrl());
-            System.out.println();
-        }
+    public List<Playlist> getPlaylists() {
+        return playlists;
     }
 
-    public UserRequestsManager requestFeaturedPlaylists() {
+    public RequestsManager requestFeaturedPlaylists() {
         if (!featuredPlaylists.isEmpty()) {
             return this;
         }
@@ -77,15 +64,14 @@ public class UserRequestsManager {
         var featuredPlaylists = request(FEATURED_PLAYLISTS_URI, "playlists");
 
         if (featuredPlaylists != null) {
-            for (var featuredPlaylist : featuredPlaylists) {
-                this.featuredPlaylists.add(new FeaturedPlaylist(featuredPlaylist));
-            }
+            featuredPlaylists.forEach(featuredPlaylist ->
+                    this.featuredPlaylists.add(new FeaturedPlaylist(featuredPlaylist)));
         }
 
         return this;
     }
 
-    public UserRequestsManager requestNewAlbums() {
+    public RequestsManager requestNewAlbums() {
         if (!newAlbums.isEmpty()) {
             return this;
         }
@@ -93,15 +79,13 @@ public class UserRequestsManager {
         var newAlbums = request(NEW_ALBUMS_URI, "albums");
 
         if (newAlbums != null) {
-            for (var newAlbum : newAlbums) {
-                this.newAlbums.add(new NewAlbum(newAlbum));
-            }
+            newAlbums.forEach(newAlbum -> this.newAlbums.add(new NewAlbum(newAlbum)));
         }
 
         return this;
     }
 
-    public UserRequestsManager requestCategories() {
+    public RequestsManager requestCategories() {
         if (!categories.isEmpty()) {
             return this;
         }
@@ -109,30 +93,26 @@ public class UserRequestsManager {
         var categories = request(CATEGORIES_URI, "categories");
 
         if (categories != null) {
-            for (var category : categories) {
-                this.categories.add(new Category(category));
-            }
+            categories.forEach(category -> this.categories.add(new Category(category)));
         }
 
         return this;
     }
 
-    public UserRequestsManager requestPlaylists(String categoryName) {
+    public RequestsManager requestPlaylists(String categoryName) {
         this.playlists.clear();
 
         if (categories.isEmpty()) {
             requestCategories();
         }
 
-        String categoryID = findCategoryIDByName(categoryName);
+        String categoryID = getCategoryIdByName(categoryName);
 
         var playlists =
                 request(PLAYLISTS_URI.replace("{category_id}", categoryID), "playlists");
 
         if (playlists != null) {
-            for (var playlist : playlists) {
-                this.playlists.add(new Playlist(playlist));
-            }
+            playlists.forEach(playlist -> this.playlists.add(new Playlist(playlist)));
         }
 
         return this;
@@ -140,7 +120,7 @@ public class UserRequestsManager {
 
     private JsonArray request(String uri, String requestObject) {
         if (httpRequestHeader == null) {
-            System.out.println("Please, provide access for application");
+            System.out.println("Please, provide access for application.");
             return null;
         }
 
@@ -161,15 +141,11 @@ public class UserRequestsManager {
         return null;
     }
 
-    private String findCategoryIDByName(String categoryName) {
+    private String getCategoryIdByName(String categoryName) {
         var category = categories.stream()
                 .filter(c -> c.getName().equals(categoryName))
                 .findAny();
 
-        if (category.isPresent()) {
-            return category.get().getId();
-        }
-
-        return "";
+        return category.isPresent() ? category.get().getId() : "";
     }
 }
